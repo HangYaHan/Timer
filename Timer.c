@@ -17,12 +17,6 @@ volatile bool should_exit = false;  // Global variable to signal program termina
 #define MEDIUM_INTERVAL 500
 #define LONG_INTERVAL 800
 
-#define DEFAULT_SAVE_PATH ****
-
-// Issues
-
-
-
 void ShowMenu();
 void GetMousePosition();
 void MeasureLocation();
@@ -32,7 +26,9 @@ void SimulateClick(int x, int y);
 int AskForInterval();
 int Wait4Start(); 
 void MonitorKeyboardInput(void *arg);
-int Caculate_TextOffset(char* path);
+int Redirect_OK_Position(int *x, int *y);
+void Timer4HC_Camera_AND_ISC();
+void Timer4HC_Camera_AND_Zolix();
 
 int main() {
     int choice;
@@ -49,8 +45,8 @@ int main() {
                 // case 3: Timer4Vimbaviewer();break;
                 // case 4: Timer4Morph();      break;
                 case 2: Timer4Zolix_AND_Vimbaviewer(); break;
-                case 3: Timer4CustomizeCamera(); break;
-                case 4: return 0; break;
+                case 3: Timer4HC_Camera_AND_ISC(); break;
+                case 4: Timer4HC_Camera_AND_Zolix(); break;
                 default: printf("Invalid choice\n"); break;
             }
             if (!should_exit) {
@@ -97,16 +93,19 @@ void ShowMenu() {
     printf("Menu:\n");
     printf("1. Start measuring mouse location\n");
     printf("2. Open timer for Zolix && Vimbaviewer (For 1 PC)\n");
-    printf("3. Open timer for Customize Camera (For 1 PC)\n");
-    printf("4. Exit\n");
+    printf("3. Open timer for HC_Camera && ISC\n");
+    printf("4. test\n");
+    printf("5. Exit\n");
     printf("Enter your choice: \n");
     printf("----------------------------------------------------\n");
 }
 
 void Timer4Zolix_AND_Vimbaviewer(){
     system("cls");
+    printf("-----------------------------------------------------\n");
     printf("Timer for Zolix_AND_Vimbaviewer\n");
     int start_wavelength, step, loops, intervals;
+    int ok_pos_x = -1, ok_pos_y = -1;
     char wavelength_str[10];
     time_t start_time, end_time;
 
@@ -118,6 +117,7 @@ void Timer4Zolix_AND_Vimbaviewer(){
     printf("Enter the number of loops: ");
     scanf("%d", &loops);
     intervals = AskForInterval();
+    Redirect_OK_Position(&ok_pos_x, &ok_pos_y);
     fflush(stdin);
     system("cls");
 
@@ -128,13 +128,15 @@ void Timer4Zolix_AND_Vimbaviewer(){
     printf("Step: %d\n", step);
     printf("Number of loops: %d\n", loops);
     printf("It will probably take %d seconds per loop\n", (intervals * 6 + GENERAL_DELAY) / 1000);
+    printf("The 'OK' position is: %d %d\n", ok_pos_x, ok_pos_y);
+    printf("The default 'OK' position is: 528 463\n");
     printf("----------------------------------------------------\n");
     printf("Make sure the path to save files is correct. \n");
     printf("Make sure the start wavelength in Vimbaviewer is correct. \n");
     printf("Make sure the layout of windows follows the standard layout. \n");
     printf("--The standard layout is on the top right corner of the desktop. \n");
     printf("It would be better to run this program for 5 loops to test the function. \n");
-    printf("--Because the emergency stop funtion is not available now. \n");
+    printf("--Because the emergency stop function is not available now. \n");
     printf("----------------------------------------------------\n");
     printf("Press any key to start the timer...\n");
     _getch();
@@ -173,7 +175,7 @@ void Timer4Zolix_AND_Vimbaviewer(){
         Sleep(intervals);
         SimulateClick(692, 591);
         Sleep(intervals);
-        SimulateClick(536, 463);
+        SimulateClick(ok_pos_x, ok_pos_y);
         Sleep(intervals);
         SimulateClick(1409, 401);
 
@@ -213,7 +215,7 @@ void Timer4CustomizeCamera()
     printf("Make sure the layout of windows follows the standard layout. \n");
     printf("--The standard layout is on the top right corner of the desktop. \n");
     printf("It would be better to run this program for 5 loops to test the function. \n");
-    printf("--Because the emergency stop funtion is not available now. \n");
+    printf("--Because the emergency stop function is not available now. \n");
     printf("----------------------------------------------------\n");
     printf("Press any key to start the timer...\n");
     _getch();
@@ -322,5 +324,121 @@ void MonitorKeyboardInput(void *arg) {
     }
 }
 
-// bug still exists when running
-// funciton of automatic test 
+int Redirect_OK_Position(int *x, int *y) {
+    system("cls");
+    printf("-----------------------------------------------------\n");
+    printf("Please redirect the position of 'OK' button. \n"); 
+    printf("--When the save path is too long, it will make the program fail. \n");
+    printf("Press 'Enter' to use the default position. \n");
+    printf("--Or enter the new position in the format 'x y'. \n");
+    printf("-----------------------------------------------------\n");
+    printf("Press 'Enter' to use the default position or enter the new position in the format 'x y':\n");
+    // Clear input buffer
+    while (getchar() != '\n');
+    // Attempt to read user input
+    int input_x, input_y;
+    int result = scanf("%d %d", &input_x, &input_y);
+    if (result == 2) {  // If successfully read two integers
+        *x = input_x;
+        *y = input_y;
+        printf("New position set: X = %d, Y = %d\n", *x, *y);
+    } else if (result == 0) {  // If user presses Enter directly
+        *x = 528;  // Default X position
+        *y = 463;  // Default Y position
+        printf("Using default position: X = %d, Y = %d\n", *x, *y);
+    } else {  // If input is invalid
+        printf("Invalid input. Using default position: X = %d, Y = %d\n", 528, 463);
+        *x = 528;
+        *y = 463;
+    }
+    // Clear input buffer to prevent interference with subsequent input
+    while (getchar() != '\n');
+    return 0;
+}
+
+void Timer4HC_Camera_AND_ISC() {
+    system("cls");
+    printf("-----------------------------------------------------\n");
+    printf("Timer for HC_Camera_AND_ISC\n");
+    int loops;
+    int intervals;
+
+    printf("Enter the number of loops: ");
+    scanf("%d", &loops);
+    fflush(stdin);
+    printf("Enter the interval for photos(ms) : ");
+    scanf("%d", &intervals);
+    fflush(stdin);
+
+    system("cls");
+
+    printf("----------------------------------------------------\n");
+    printf("Checklist: \n");
+    printf("----------------------------------------------------\n");
+    printf("Number of loops: %d\n", loops);
+    printf("It will probably take %d seconds per loop\n", (intervals * 2 + GENERAL_DELAY) / 1000);
+    printf("----------------------------------------------------\n");
+    printf("Make sure the path to save files is correct. \n");
+    printf("Make sure the start wavelength in Vimbaviewer is correct. \n");
+    printf("Make sure the layout of windows follows the standard layout. \n");
+    printf("It would be better to run this program for 5 loops to test the function. \n");
+    printf("--Because the emergency stop function is not available now. \n");
+    printf("----------------------------------------------------\n");
+    printf("Press any key to start the timer...\n");
+    _getch();
+    fflush(stdin);
+
+    //Countdown 10 seconds
+    for (int i = 10; i > 0; i--) {
+        printf("Start in %d seconds...\n", i);
+        Sleep(1000);
+    }
+
+    for (int i = 0; i < loops; i++) {
+        SimulateClick(649, 111);
+        Sleep(intervals);
+        SimulateClick(221, 414);
+        Sleep(SHORT_INTERVAL);
+        SimulateClick(307, 421);
+        Sleep(SHORT_INTERVAL);
+    }
+    printf("Completed %d clicks.\n", loops);
+    printf("----------------------------------------------------\n");
+    printf("Press any key to continue...\n");
+    _getch();
+    fflush(stdin);
+}
+
+void Timer4HC_Camera_AND_Zolix(){
+    system("cls");
+    printf("-----------------------------------------------------\n");
+    printf("Timer for HC_Camera_AND_ISC\n");
+    int loops;
+    int intervals;
+
+    printf("Enter the number of loops: ");
+    scanf("%d", &loops);
+    fflush(stdin);
+    printf("Enter the interval for photos(ms) : ");
+    scanf("%d", &intervals);
+    fflush(stdin);
+
+    system("cls");
+
+    for (int i = 10; i > 0; i--) {
+        printf("Start in %d seconds...\n", i);
+        Sleep(1000);
+    }
+
+    for (int i = 0; i < loops; i++) {
+        SimulateClick(146, 129);
+        Sleep(intervals);
+        SimulateClick(1402, 401);
+        Sleep(SHORT_INTERVAL);
+    }
+    printf("Completed %d clicks.\n", loops);
+    printf("----------------------------------------------------\n");
+    printf("Press any key to continue...\n");
+    _getch();
+    fflush(stdin);
+}
