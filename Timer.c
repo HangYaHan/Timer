@@ -64,9 +64,6 @@ int main() {
             switch (choice) {
                 case 0: Test4files_counter(); break;
                 case 1: MeasureLocation(); break;
-                // case 2: Timer4Zolix();      break;
-                // case 3: Timer4Vimbaviewer();break;
-                // case 4: Timer4Morph();      break;
                 case 2: Timer4Zolix_AND_Vimbaviewer(); break;
                 case 3: Timer4HC_Camera_AND_ISC(); break;
                 case 4: Timer4_06_11(); break;
@@ -119,7 +116,7 @@ void ShowMenu() {
     printf("0. Test for files counter\n");
     printf("1. Start measuring mouse location\n");
     printf("2. Open timer for Zolix && Vimbaviewer (For 1 PC)\n");
-    printf("3. Open timer for HC_Camera && ISC\n");
+    printf("3. Open timer for USBCamera_Ocean_ISC\n");
     printf("4. test\n");
     printf("5. Exit\n");
     printf("Enter your choice: \n");
@@ -217,17 +214,19 @@ void Timer4Zolix_AND_Vimbaviewer(){
     fflush(stdin);
 }
 
-void Timer4CustomizeCamera()
+void Timer4USBCamera_Ocean_ISC()
 {
     system("cls");
-    printf("Timer for Customize Camera\n");
+    printf("-----------------------------------------------------\n");
+    printf("Timer for USBCamera_Ocean_ISC\n");
     int loops, intervals;
     time_t start_time, end_time;
 
-    // Get arguments from the user
     printf("Enter the number of loops: ");
     scanf("%d", &loops);
-    intervals = AskForInterval();
+    printf("Enter the interval after save  in milliseconds: \n");
+    printf("It is strongly recommended to use 5000 ms at least. \n");
+    scanf("%d", &intervals);
     fflush(stdin);
     system("cls");
 
@@ -235,11 +234,10 @@ void Timer4CustomizeCamera()
     printf("Checklist: \n");
     printf("----------------------------------------------------\n");
     printf("Number of loops: %d\n", loops);
-    printf("It will probably take %d seconds per loop\n", (intervals * 6 + GENERAL_DELAY) / 1000);
+    printf("It will probably take %d seconds per loop\n", (MEDIUM_INTERVAL + intervals + SHORT_INTERVAL + GENERAL_DELAY) / 1000);
     printf("----------------------------------------------------\n");
     printf("Make sure the path to save files is correct. \n");
-    printf("Make sure the layout of windows follows the standard layout. \n");
-    printf("--The standard layout is on the top right corner of the desktop. \n");
+    printf("Make sure the layout of the 3 windows follows the standard layout. \n");
     printf("It would be better to run this program for 5 loops to test the function. \n");
     printf("--Because the emergency stop function is not available now. \n");
     printf("----------------------------------------------------\n");
@@ -257,18 +255,25 @@ void Timer4CustomizeCamera()
     Sleep(intervals);
     system("cls");
 
-    HWND hWnd = GetConsoleWindow();
+    HWND hWnd = GetConsoleWindow(); 
     ShowWindow(hWnd, SW_MINIMIZE);
     time(&start_time);
     for (int i = 0; i < loops; i++) {
+        Sleep(MEDIUM_INTERVAL);
+        // Save Spectrum
+        SimulateClick(280, 119);
+        Sleep(intervals);
+
+        // Save Image
+        SimulateClick(953, 15);
+        Sleep(SHORT_INTERVAL);
+        keybd_event(VK_RETURN, 0, 0, 0);
+        keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
         Sleep(GENERAL_DELAY);
 
-        SimulateClick(377, 35);
-        Sleep(intervals);
-        keybd_event('W', 0, 0, 0);
-        keybd_event('W', 0, KEYEVENTF_KEYUP, 0);
-        Sleep(intervals);
-        SimulateClick(1409, 401);
+        // Change Light
+        SimulateClick(842, 653);
+        
     }
     time(&end_time);
     printf("Completed %d clicks.\n", loops);
@@ -381,94 +386,6 @@ int Redirect_OK_Position(int *x, int *y) {
     while (getchar() != '\n');
     return 0;
 }
-
-void Timer4HC_Camera_AND_ISC() {
-    system("cls");
-    printf("-----------------------------------------------------\n");
-    printf("Timer for HC_Camera_AND_ISC\n");
-    int loops;
-    int intervals;
-
-    printf("Enter the number of loops: ");
-    scanf("%d", &loops);
-    fflush(stdin);
-    printf("Enter the interval for photos(ms) : ");
-    scanf("%d", &intervals);
-    fflush(stdin);
-
-    system("cls");
-
-    printf("----------------------------------------------------\n");
-    printf("Checklist: \n");
-    printf("----------------------------------------------------\n");
-    printf("Number of loops: %d\n", loops);
-    printf("It will probably take %d seconds per loop\n", (intervals * 2 + GENERAL_DELAY) / 1000);
-    printf("----------------------------------------------------\n");
-    printf("Make sure the path to save files is correct. \n");
-    printf("Make sure the start wavelength in Vimbaviewer is correct. \n");
-    printf("Make sure the layout of windows follows the standard layout. \n");
-    printf("It would be better to run this program for 5 loops to test the function. \n");
-    printf("--Because the emergency stop function is not available now. \n");
-    printf("----------------------------------------------------\n");
-    printf("Press any key to start the timer...\n");
-    _getch();
-    fflush(stdin);
-
-    //Countdown 10 seconds
-    for (int i = 10; i > 0; i--) {
-        printf("Start in %d seconds...\n", i);
-        Sleep(1000);
-    }
-
-    for (int i = 0; i < loops; i++) {
-        SimulateClick(649, 111);
-        Sleep(intervals);
-        SimulateClick(221, 414);
-        Sleep(SHORT_INTERVAL);
-        SimulateClick(307, 421);
-        Sleep(SHORT_INTERVAL);
-    }
-    printf("Completed %d clicks.\n", loops);
-    printf("----------------------------------------------------\n");
-    printf("Press any key to continue...\n");
-    _getch();
-    fflush(stdin);
-}
-
-void Timer4HC_Camera_AND_Zolix(){
-    system("cls");
-    printf("-----------------------------------------------------\n");
-    printf("Timer for HC_Camera_AND_ISC\n");
-    int loops;
-    int intervals;
-
-    printf("Enter the number of loops: ");
-    scanf("%d", &loops);
-    fflush(stdin);
-    printf("Enter the interval for photos(ms) : ");
-    scanf("%d", &intervals);
-    fflush(stdin);
-
-    system("cls");
-
-    for (int i = 10; i > 0; i--) {
-        printf("Start in %d seconds...\n", i);
-        Sleep(1000);
-    }
-
-    for (int i = 0; i < loops; i++) {
-        SimulateClick(146, 129);
-        Sleep(intervals);
-        SimulateClick(1402, 401);
-        Sleep(SHORT_INTERVAL);
-    }
-    printf("Completed %d clicks.\n", loops);
-    printf("----------------------------------------------------\n");
-    printf("Press any key to continue...\n");
-    _getch();
-    fflush(stdin);
-}
-
 void Timer4_06_11(){
     
     int loops;
