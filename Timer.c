@@ -33,27 +33,14 @@ int AskForInterval();
 int Wait4Start(); 
 void MonitorKeyboardInput(void *arg);
 int Redirect_OK_Position(int *x, int *y);
-void Timer4HC_Camera_AND_ISC();
-void Timer4HC_Camera_AND_Zolix();
 void Timer4_06_11();
+void Timer_USB_ML();
 int get_n_files_in_directory(const char *path);
 void get_path(char *path_spec, char *path_image);
 void delete_last_file(const char *path);
 
 int main() {
     int choice;
-
-    // char* path_spec = (char *)malloc(MAX_PATH * sizeof(char));
-    // char* path_image = (char *)malloc(MAX_PATH * sizeof(char));
-    // get_path(path_spec, path_image);
-    // printf("files in path_spec: %d\n", get_n_files_in_directory(path_spec));
-    // printf("files in path_image: %d\n", get_n_files_in_directory(path_image));
-
-    // delete_last_file(path_spec);
-
-    // printf("files in path_spec: %d\n", get_n_files_in_directory(path_spec));
-    // printf("files in path_image: %d\n", get_n_files_in_directory(path_image));
-
 
     _beginthread(MonitorKeyboardInput, 0, NULL);
     Sleep(GENERAL_DELAY);
@@ -65,7 +52,7 @@ int main() {
                 case 0: Test4files_counter(); break;
                 case 1: MeasureLocation(); break;
                 case 2: Timer4Zolix_AND_Vimbaviewer(); break;
-                case 3: Timer4HC_Camera_AND_ISC(); break;
+                case 3: Timer_USB_ML(); break;
                 case 4: Timer4_06_11(); break;
                 default: printf("Invalid choice\n"); break;
             }
@@ -116,7 +103,7 @@ void ShowMenu() {
     printf("0. Test for files counter\n");
     printf("1. Start measuring mouse location\n");
     printf("2. Open timer for Zolix && Vimbaviewer (For 1 PC)\n");
-    printf("3. Open timer for USBCamera_Ocean_ISC\n");
+    printf("3. Open timer for USB Camera && Ocean && ISC\n");
     printf("4. test\n");
     printf("5. Exit\n");
     printf("Enter your choice: \n");
@@ -400,10 +387,8 @@ void Timer4_06_11(){
     scanf("%d", &loops);
     fflush(stdin);
     system("cls");
+
     get_path(path_spec, path_image);
-
-
-
     printf("----------------------------------------------------\n");
     printf("Checklist: \n");
     printf("----------------------------------------------------\n");
@@ -426,7 +411,6 @@ void Timer4_06_11(){
         n_images = get_n_files_in_directory(path_image);
         n_specs = get_n_files_in_directory(path_spec);
         if (n_images != n_specs) {
-            system("cls");
             printf("----------------------------------------------------\n");
             printf("Error!\n");
             printf("The number of files in the path_image (%d) and path_spec (%d) is not equal.\n", n_images, n_specs);
@@ -577,4 +561,98 @@ void delete_last_file(const char *path) {
     } else {
         printf("No file to delete in the directory.\n");
     }
+}
+
+void Timer_USB_ML(){
+    system("cls");
+    printf("-----------------------------------------------------\n");
+    printf("Timer for USB_ML\n");
+    int loops;
+    time_t start_time, end_time;
+    char path_spec[MAX_PATH];
+    char path_image[MAX_PATH];
+
+    printf("Enter the number of loops: ");
+    scanf("%d", &loops);
+    fflush(stdin);
+    system("cls");
+
+    get_path(path_spec, path_image);
+    printf("----------------------------------------------------\n");
+    printf("Checklist: \n");
+    printf("----------------------------------------------------\n");
+    printf("Number of loops: %d\n", loops);
+    printf("It will probably take %d seconds per loop\n", (SHORT_INTERVAL * 3) / 1000);
+    printf("Files in path_spec: %d\n", get_n_files_in_directory(path_spec));
+    printf("Files in path_image: %d\n", get_n_files_in_directory(path_image));
+    printf("----------------------------------------------------\n");
+    printf("Press any key to start the timer...\n");
+    _getch();
+    fflush(stdin);
+    system("cls");
+
+    //Countdown 10 seconds
+    for (int i = 10; i > 0; i--) {
+        printf("Start in %d seconds...\n", i);
+        Sleep(1000);
+    }
+
+
+    HWND hWnd = GetConsoleWindow();
+    ShowWindow(hWnd, SW_MINIMIZE);
+    time(&start_time);
+    for (int i = 0; i < loops; i++) {
+        // Check if the number of files in the directories is equal
+        int n_specs = get_n_files_in_directory(path_spec);
+        int n_images = get_n_files_in_directory(path_image);
+        if (n_specs != n_images) {
+            printf("----------------------------------------------------\n");
+            printf("Error!\n");
+            printf("The number of files in the path_image (%d) and path_spec (%d) is not equal.\n", n_images, n_specs);
+            printf("Current loop: %d\n", i + 1);
+            printf("Calling auto delete function...\n");
+
+            delete_last_file(n_images > n_specs ? path_image : path_spec);
+            n_images = get_n_files_in_directory(path_image);
+            n_specs = get_n_files_in_directory(path_spec);
+
+            // Check again if the number of files is equal after deletion
+            if (n_images != n_specs) {
+                printf("The number of files in the path_image (%d) and path_spec (%d) is still not equal.\n", 
+                       n_images, n_specs);
+                printf("Fatal error! The program will exit now.\n");
+                return; 
+            }
+            else {
+                printf("The number of files in the path_image (%d) and path_spec (%d) is now equal.\n", 
+                       n_images, n_specs);
+            }
+        }
+
+        Sleep(MEDIUM_INTERVAL);
+
+        // Save Spectrum
+        SimulateClick(280, 119);  
+        Sleep(LONG_INTERVAL * 3);
+
+        // Save Image
+        SimulateClick(953, 15);
+        Sleep(SHORT_INTERVAL);
+        keybd_event(VK_RETURN, 0, 0, 0);  //
+        keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);  // Simulate Enter key press
+        Sleep(GENERAL_DELAY);
+
+        // Change Light
+        SimulateClick(842, 653);
+    }
+    time(&end_time);
+    printf("Completed %d clicks.\n", loops);
+    printf("Total time taken: %d minutes %d seconds\n", 
+           (int)difftime(end_time, start_time) / 60, 
+           (int)difftime(end_time, start_time) % 60);
+    ShowWindow(hWnd, SW_RESTORE);
+    printf("----------------------------------------\n");
+    printf("Press any key to continue...\n");
+    _getch();
+    fflush(stdin);
 }
