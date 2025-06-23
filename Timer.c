@@ -6,6 +6,7 @@
 #include <process.h>
 #include <time.h>
 #include <dirent.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -22,11 +23,20 @@ volatile bool should_exit = false;  // Global variable to signal program termina
 #define MEDIUM_INTERVAL 500
 #define LONG_INTERVAL 800
 
+#define MAX_ACTION_COUNT 10
+
+typedef struct{
+    int x;
+    int y;
+    int delay;
+    int type; // 0 for click, 1 for delay
+} Action;
+
+
 void ShowMenu();
 void GetMousePosition();
 void MeasureLocation();
 void Timer4Zolix_AND_Vimbaviewer();
-void Timer4CustomizeCamera();
 void Test4files_counter();
 void SimulateClick(int x, int y);
 int AskForInterval();
@@ -38,32 +48,40 @@ void Timer_USB_ML();
 int get_n_files_in_directory(const char *path);
 void get_path(char *path_spec, char *path_image);
 void delete_last_file(const char *path);
+void LoadCustomizeTask();
+Action* ActionAnalyzer(char* action_str);
+void print_action(Action* action);
 
 int main() {
-    int choice;
 
-    _beginthread(MonitorKeyboardInput, 0, NULL);
-    Sleep(GENERAL_DELAY);
-    ShowMenu();
+    char test_str[] = "123 456";
+    LoadCustomizeTask();
 
-    while (!should_exit) {
-        if (scanf("%d", &choice) == 1) {
-            switch (choice) {
-                case 0: Test4files_counter(); break;
-                case 1: MeasureLocation(); break;
-                case 2: Timer4Zolix_AND_Vimbaviewer(); break;
-                case 3: Timer_USB_ML(); break;
-                case 4: Timer4_06_11(); break;
-                default: printf("Invalid choice\n"); break;
-            }
-            if (!should_exit) {
-                ShowMenu();
-            }
-        }
-    }
+    // int choice;
 
-    printf("Exiting program...\n");
-    return 0;
+    // _beginthread(MonitorKeyboardInput, 0, NULL);
+    // Sleep(GENERAL_DELAY);
+    // ShowMenu();
+
+    // while (!should_exit) {
+    //     if (scanf("%d", &choice) == 1) {
+    //         switch (choice) {
+    //             case 0: Test4files_counter(); break;
+    //             case 1: MeasureLocation(); break;
+    //             case 2: LoadCustomizeTask(); break;
+    //             case 3: Timer4Zolix_AND_Vimbaviewer(); break;
+    //             case 4: Timer_USB_ML(); break;
+    //             case 5: Timer4_06_11(); break;
+    //             default: printf("Invalid choice\n"); break;
+    //         }
+    //         if (!should_exit) {
+    //             ShowMenu();
+    //         }
+    //     }
+    // }
+
+    // printf("Exiting program...\n");
+    // return 0;
 }
 
 // Function to get the current mouse position
@@ -655,4 +673,107 @@ void Timer_USB_ML(){
     printf("Press any key to continue...\n");
     _getch();
     fflush(stdin);
+}
+
+void LoadCustomizeTask() {
+    system("cls");
+    printf("-----------------------------------------------------\n");
+    printf("Loading Customized Task...\n");
+    Sleep(GENERAL_DELAY);
+
+    Action* action_array[MAX_ACTION_COUNT];
+    FILE* file = fopen("custom_task.txt", "r");
+    if (file == NULL) {
+        printf("No custom task file found. Please create 'custom_task.txt' in the current directory.\n");
+        return;
+    }
+
+    char line[256];
+    int action_count = 0;
+    while (fgets(line, sizeof(line), file)) {
+        // Remove newline character if present
+        line[strcspn(line, "\r\n")] = 0;
+        Action* action = ActionAnalyzer(line);
+        if (action != NULL) {
+            if (action_count < MAX_ACTION_COUNT) {
+                action_array[action_count++] = action;
+            } else {
+                printf("Maximum action count reached. Ignoring additional actions.\n");
+                free(action);
+            }
+        }
+    }
+    fclose(file);
+
+    int i=0;
+    while (i < action_count) {
+        print_action(action_array[i]);
+        i++;
+    }
+    printf("-----------------------------------------------------\n");
+}
+
+Action* ActionAnalyzer(char* action_str) {
+    Action* action = (Action*)malloc(sizeof(Action));
+    if (action == NULL) {
+        printf("Memory allocation failed for Action structure.\n");
+        return NULL;
+    }
+    action->x = -1;
+    action->y = -1;
+    action->delay = -1;
+    action->type = -1; // Default type is click
+
+    // Determine if action_str contains one number, two numbers, or other cases
+    int count = 0;
+    char *p = action_str;
+    while (*p) {
+        if (*p >= '0' && *p <= '9') {
+            count++;
+            // Skip consecutive digits
+            while (*p >= '0' && *p <= '9') p++;
+        } else {
+            p++;
+        }
+    }
+    if (count == 1) {
+        action->delay = atoi(action_str);
+        action->type = 1; // Assuming single number means delay
+    } else if (count == 2) {
+        sscanf(action_str, "%d %d", &action->x, &action->y);
+        action->type = 0; // Assuming two numbers mean click position
+    } else {
+        printf("Invalid action_str format: %s\n", action_str);
+        free(action);
+        return NULL;
+    }
+    return action;
+}
+
+void print_action(Action* action) {
+    if (action == NULL) {
+        printf("Action is NULL.\n");
+        return;
+    }
+    printf("Action Details:\n");
+    printf("X: %d, Y: %d, Delay: %d, Type: %d\n", action->x, action->y, action->delay, action->type);
+}
+
+void build_task(Action* action_array) {
+    if (action_array == NULL) {
+        printf("Action is NULL.\n");
+        printf("Reach the end of the chain.\n");
+        return;
+    }
+
+    // Build the task based on the action details
+    while (action_array->type != -1) {
+        assert(action_array->type == 0 || action_array->type == 1);
+        if (action_array->type == 0) { // Click action
+            SimulateClick(action_array->x, action_array->y);
+        } else if (action_array->type == 1) { // Delay action
+            Sleep(action_array->delay);
+        }
+        action_array++;
+    }
 }
